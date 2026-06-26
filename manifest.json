@@ -9,16 +9,31 @@
   "orientation": "portrait",
   "icons": [
     {
-      "src": "https://cdn-icons-png.flaticon.com/512/3204/3204683.png",
+      "src": "https://placehold.co/192x192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "https://cdn-icons-png.flaticon.com/512/3204/3204683.png",
+      "src": "https://placehold.co/512x512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "https://placehold.co/1280x720.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "กระดานควบคุมงานบนคอมพิวเตอร์"
+    },
+    {
+      "src": "https://placehold.co/720x1280.png",
+      "sizes": "720x1280",
+      "type": "image/png",
+      "label": "กระดานควบคุมงานบนมือถือ"
     }
   ]
 }
