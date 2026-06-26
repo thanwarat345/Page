@@ -142,16 +142,27 @@
       deferredPrompt = e;
     });
 
-    // เมื่อกดปุ่ม "ติดตั้งแอป" (Android/PC)
+    // เมื่อกดปุ่ม "ติดตั้งแอป"
     document.getElementById('installBtn').addEventListener('click', () => {
-      if (!deferredPrompt) {
-        alert('กรุณากดปุ่ม 3 จุดด้านบนขวา แล้วเลือก "ติดตั้งแอป" หรือ "เพิ่มลงในหน้าจอโฮม" ด้วยตัวเองครับ');
+      // 1. ถ้าเป็น iOS ให้แสดงคำแนะนำการกดเมนูแชร์
+      if (isIOS) {
+        alert("วิธีติดตั้งบน iPhone:\n1. กดปุ่ม 'แชร์' (Share) ด้านล่าง\n2. เลื่อนหาเมนู 'เพิ่มไปยังหน้าจอโฮม' (Add to Home Screen)\n3. กด 'เพิ่ม' (Add) เพื่อเริ่มใช้งาน");
         return;
       }
-      deferredPrompt.prompt();
-      deferredPrompt.userChoice.then(() => {
-        deferredPrompt = null;
-      });
+
+      // 2. ถ้าเป็น Android / PC และยังไม่ได้เรียก prompt
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then((choiceResult) => {
+          if (choiceResult.outcome === 'accepted') {
+            console.log('User accepted the install prompt');
+          }
+          deferredPrompt = null;
+        });
+      } else {
+        // กรณีเบราว์เซอร์ไม่รองรับ หรือติดตั้งไปแล้ว
+        alert("แอปนี้ถูกติดตั้งแล้ว หรือเบราว์เซอร์ไม่รองรับการติดตั้งอัตโนมัติ\nให้ลองกดเมนู 3 จุดด้านบนขวา แล้วเลือก 'ติดตั้งแอป' ครับ");
+      }
     });
 
     // เมื่อแอปติดตั้งสำเร็จ
