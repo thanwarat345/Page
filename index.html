@@ -5,117 +5,196 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Geely Auto Portal</title>
   
-  <!-- เชื่อมโยง Manifest สำหรับ PWA -->
   <link rel="manifest" href="./manifest.json">
   <meta name="theme-color" content="#0B132B">
   <link rel="apple-touch-icon" href="./icon-192.png">
 
   <style>
-    body, html { margin: 0; padding: 0; width: 100vw; height: 100vh; overflow: hidden; background-color: #0B132B; }
-    iframe { width: 100%; height: 100%; border: none; display: block; }
+    body, html { margin: 0; padding: 0; width: 100vw; height: 100vh; overflow: hidden; background-color: #0B132B; font-family: sans-serif; }
     
-    /* ปุ่มติดตั้ง PWA แบบกำหนดเอง */
-    #installBtn {
-      position: fixed; top: 20px; right: 20px; z-index: 10000;
-      background: #10B981; color: white; border: none; padding: 10px 20px;
-      border-radius: 8px; font-family: sans-serif; font-weight: bold; font-size: 14px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.3); cursor: pointer; display: none;
+    /* ซ่อนแอปหลักไว้ก่อน จนกว่าจะผ่านด่านตั้งค่า */
+    #appFrame { width: 100%; height: 100%; border: none; display: none; }
+    
+    /* หน้าจอ Lock Screen กั้นคนยังไม่ตั้งค่า */
+    #gatekeeper {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: radial-gradient(circle at 50% 30%, #1c2541 0%, #0b132b 100%);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      z-index: 10000; padding: 20px; text-align: center; color: white;
     }
-
-    /* ปุ่มขอสิทธิ์การแจ้งเตือน */
-    #notifyBtn {
-      position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
-      background: #00B4D8; color: white; border: none; padding: 12px 24px;
-      border-radius: 30px; font-family: sans-serif; font-weight: bold;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.3); cursor: pointer; display: none; z-index: 9999;
-    }
+    
+    .card { background: white; color: #1F2937; padding: 30px; border-radius: 16px; width: 100%; max-width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+    
+    .step-box { margin-bottom: 20px; padding: 15px; border: 1px solid #E5E7EB; border-radius: 12px; text-align: left; background: #F9FAFB; transition: 0.3s; }
+    .step-box.success { border-color: #10B981; background: #ECFDF5; }
+    .step-box.disabled { opacity: 0.5; pointer-events: none; }
+    
+    h3 { margin: 0 0 10px 0; font-size: 16px; color: #0B132B; }
+    p { margin: 0 0 15px 0; font-size: 13px; color: #6B7280; }
+    
+    .btn { width: 100%; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 14px; transition: 0.2s; }
+    .btn-primary { background: #00B4D8; color: white; }
+    .btn-success { background: #10B981; color: white; }
+    .btn-warning { background: #F59E0B; color: white; }
+    
+    /* กล่องคำแนะนำสำหรับชาว iOS โดยเฉพาะ */
+    .ios-instruct { font-size: 13px; color: #D97706; background: #FEF3C7; padding: 12px; border-radius: 8px; display: none; margin-bottom: 20px; text-align: left; border: 1px solid #FCD34D;}
   </style>
 </head>
 <body>
 
-  <!-- ปุ่มต่างๆ -->
-  <button id="installBtn">📲 ติดตั้งแอป (Install)</button>
-  <button id="notifyBtn" onclick="requestNotificationPermission()">เปิดการแจ้งเตือน</button>
+  <div id="gatekeeper">
+    <div class="card">
+      <h2 style="margin-top:0; color:#0B132B; font-size: 20px;">⚙️ ตั้งค่าระบบก่อนเข้าใช้งาน</h2>
+      <p style="text-align: center; margin-bottom: 20px;">กรุณาทำตามขั้นตอนด้านล่างเพื่อให้ระบบทำงานได้สมบูรณ์ และรับการแจ้งเตือนงานได้</p>
+      
+      <div id="iosInstruct" class="ios-instruct">
+        <b>สำหรับผู้ใช้ iPhone / iPad:</b><br><br>
+        1. กดไอคอน <b>แชร์ (Share)</b> ที่แถบด้านล่างของเบราว์เซอร์<br>
+        2. เลือก <b>เพิ่มไปยังหน้าจอโฮม (Add to Home Screen)</b><br>
+        3. <b>ปิดหน้านี้</b> แล้วไปกดเข้าแอปจากหน้าจอโฮมแทนครับ
+      </div>
 
-  <!-- ลิงก์ Web App จาก Google Apps Script ของคุณ -->
+      <div id="step1Box" class="step-box">
+        <h3>ขั้นที่ 1: ติดตั้งแอปลงเครื่อง</h3>
+        <p>เพื่อการใช้งานที่เสถียรและแสดงผลเต็มหน้าจอ</p>
+        <button id="installBtn" class="btn btn-primary">📲 กดเพื่อติดตั้งแอป</button>
+        <button id="installedBtn" class="btn btn-success" style="display:none;" disabled>✅ ติดตั้งเรียบร้อยแล้ว</button>
+      </div>
+
+      <div id="step2Box" class="step-box disabled">
+        <h3>ขั้นที่ 2: เปิดการแจ้งเตือน</h3>
+        <p>เพื่อรับการแจ้งเตือนเมื่อมีคิวรถใหม่หรืองานเสร็จ</p>
+        <button id="notifyBtn" class="btn btn-primary" onclick="requestNotificationPermission()">🔔 กดเปิดการแจ้งเตือน</button>
+        <button id="notifiedBtn" class="btn btn-success" style="display:none;" disabled>✅ เปิดใช้งานแล้ว</button>
+      </div>
+
+    </div>
+  </div>
+
   <iframe id="appFrame" src="https://script.google.com/macros/s/AKfycbwvPMb9Bu4ZTCjb6sNTIYJ3w_X5beSuiAddk7ljE15-ZsZ01UfvVRaTKYmRGiCSIN11Jg/exec" allow="camera; microphone; fullscreen; display-capture" allowfullscreen></iframe>
 
   <script>
-    // 1. ลงทะเบียน Service Worker สำหรับ PWA
+    // ลงทะเบียน Service Worker เบื้องหลัง
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js').then(reg => {
-          console.log('Service Worker ลงทะเบียนสำเร็จ', reg);
-        }).catch(err => console.error('Service Worker ล้มเหลว', err));
+        navigator.serviceWorker.register('./sw.js').catch(err => console.error(err));
       });
     }
 
-    // 2. ดักจับ PWA เพื่อโชว์ปุ่ม "ติดตั้งแอป"
+    const gatekeeper = document.getElementById('gatekeeper');
+    const appFrame = document.getElementById('appFrame');
+    
+    // ระบบตรวจจับว่าเป็น iOS (iPhone/iPad) หรือไม่
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    
+    // ตรวจสอบว่าเปิดผ่านแอปที่ติดตั้งแล้ว (Standalone) หรือเปิดผ่านเบราว์เซอร์ปกติ
+    function isStandalone() {
+      return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+    }
+
     let deferredPrompt;
+    let pwaInstalled = isStandalone();
+    let notifyGranted = ('Notification' in window && Notification.permission === 'granted');
+
+    // ฟังก์ชันตรวจสอบและอัปเดตหน้าจอ
+    function updateUI() {
+      pwaInstalled = isStandalone();
+      notifyGranted = ('Notification' in window && Notification.permission === 'granted');
+
+      // ตรวจสอบ Step 1 (ติดตั้งแอป)
+      if (pwaInstalled) {
+        document.getElementById('step1Box').classList.add('success');
+        document.getElementById('installBtn').style.display = 'none';
+        document.getElementById('installedBtn').style.display = 'block';
+        document.getElementById('iosInstruct').style.display = 'none';
+        
+        // ปลดล็อคให้กด Step 2 ได้ (ทำ Step 1 เสร็จแล้ว)
+        document.getElementById('step2Box').classList.remove('disabled');
+      } else {
+        // หากยังไม่ได้ติดตั้ง และเป็น iOS ให้โชว์คำแนะนำวิธีติดตั้งแบบ Manual
+        if (isIOS) {
+          document.getElementById('iosInstruct').style.display = 'block';
+          document.getElementById('installBtn').style.display = 'none'; // iOS กดปุ่มติดตั้งไม่ได้ ต้องทำมือเท่านั้น
+        }
+      }
+
+      // ตรวจสอบ Step 2 (การแจ้งเตือน)
+      if (notifyGranted) {
+        document.getElementById('step2Box').classList.add('success');
+        document.getElementById('notifyBtn').style.display = 'none';
+        document.getElementById('notifiedBtn').style.display = 'block';
+      } else if (Notification.permission === 'denied') {
+        document.getElementById('notifyBtn').innerText = "❌ คุณบล็อกการแจ้งเตือนไว้ (ต้องแก้ในตั้งค่ามือถือ)";
+        document.getElementById('notifyBtn').className = "btn btn-warning";
+      }
+
+      // 💥 เงื่อนไขสำคัญ: ถ้าผ่านทั้ง 2 ด่าน (ติดตั้งแล้ว + อนุญาตแจ้งเตือนแล้ว) ให้แสดงแอปหลัก
+      if (pwaInstalled && notifyGranted) {
+        gatekeeper.style.display = 'none'; // ซ่อนหน้าจอกั้น
+        appFrame.style.display = 'block';  // โชว์หน้าแอปเต็มจอ
+      }
+    }
+
+    // ดักจับ PWA Prompt สำหรับ Android และ PC
     window.addEventListener('beforeinstallprompt', (e) => {
-      // ดักไม่ให้ Chrome แสดง UI ของตัวเอง
       e.preventDefault();
       deferredPrompt = e;
-      
-      // แสดงปุ่ม "ติดตั้งแอป" ของเรา
-      const installBtn = document.getElementById('installBtn');
-      installBtn.style.display = 'block';
-
-      installBtn.addEventListener('click', () => {
-        installBtn.style.display = 'none';
-        deferredPrompt.prompt();
-        deferredPrompt.userChoice.then((choiceResult) => {
-          if (choiceResult.outcome === 'accepted') {
-            console.log('ผู้ใช้กดยอมรับการติดตั้ง');
-          }
-          deferredPrompt = null;
-        });
-      });
     });
 
-    // ซ่อนปุ่มถ้าแอปถูกติดตั้งไปแล้ว
-    window.addEventListener('appinstalled', () => {
-      document.getElementById('installBtn').style.display = 'none';
-      console.log('ติดตั้ง PWA เรียบร้อย');
-    });
-
-    // 3. จัดการสิทธิ์การแจ้งเตือน
-    function checkNotificationStatus() {
-      if ('Notification' in window && Notification.permission === 'default') {
-        document.getElementById('notifyBtn').style.display = 'block';
+    // เมื่อกดปุ่ม "ติดตั้งแอป" (Android/PC)
+    document.getElementById('installBtn').addEventListener('click', () => {
+      if (!deferredPrompt) {
+        alert('กรุณากดปุ่ม 3 จุดด้านบนขวา แล้วเลือก "ติดตั้งแอป" หรือ "เพิ่มลงในหน้าจอโฮม" ด้วยตัวเองครับ');
+        return;
       }
-    }
-    checkNotificationStatus();
+      deferredPrompt.prompt();
+      deferredPrompt.userChoice.then(() => {
+        deferredPrompt = null;
+      });
+    });
 
+    // เมื่อแอปติดตั้งสำเร็จ
+    window.addEventListener('appinstalled', () => {
+      updateUI();
+    });
+
+    // เมื่อกดปุ่ม "เปิดการแจ้งเตือน"
     function requestNotificationPermission() {
+      if (!('Notification' in window)) {
+        alert("มือถือ/เบราว์เซอร์ของคุณไม่รองรับการแจ้งเตือนครับ");
+        return;
+      }
       Notification.requestPermission().then(permission => {
-        if (permission === 'granted') {
-          document.getElementById('notifyBtn').style.display = 'none';
-          alert('เปิดการแจ้งเตือนสำเร็จ!');
-        }
+        updateUI(); // อัปเดตหน้าจอทันทีที่กดอนุญาต
       });
     }
 
-    // 4. รับข้อความ (postMessage) จาก Iframe (หน้า GAS) เพื่อแจ้งเตือน
+    // เช็คสถานะซ้ำเมื่อผู้ใช้สลับแอปไปมา (เผื่อแอบไปกดอนุญาตในตั้งค่าเครื่อง)
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === 'visible') {
+        updateUI();
+      }
+    });
+
+    // รันฟังก์ชันตรวจเช็คตอนเปิดหน้าเว็บครั้งแรก
+    updateUI();
+
+    // ฟังคำสั่งแจ้งเตือนที่ถูกส่งมาจากฝั่ง Google Apps Script
     window.addEventListener("message", (event) => {
       if (event.data && event.data.type === 'SHOW_NOTIFICATION') {
-        showPushNotification(event.data.title, event.data.body);
+        if (Notification.permission === 'granted' && navigator.serviceWorker) {
+          navigator.serviceWorker.ready.then(function(registration) {
+            registration.showNotification(event.data.title, {
+              body: event.data.body,
+              icon: './icon-192.png',
+              vibrate: [200, 100, 200],
+              badge: './icon-192.png'
+            });
+          });
+        }
       }
     });
-
-    // 5. สั่ง Service Worker ให้แสดงการแจ้งเตือน
-    function showPushNotification(title, body) {
-      if (Notification.permission === 'granted' && navigator.serviceWorker) {
-        navigator.serviceWorker.ready.then(function(registration) {
-          registration.showNotification(title, {
-            body: body,
-            icon: './icon-192.png',
-            vibrate: [200, 100, 200],
-            badge: './icon-192.png'
-          });
-        });
-      }
-    }
   </script>
 </body>
 </html>
