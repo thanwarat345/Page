@@ -13,16 +13,17 @@
     body, html { margin: 0; padding: 0; width: 100vw; height: 100vh; overflow: hidden; background-color: #0B132B; }
     iframe { width: 100%; height: 100%; border: none; }
     /* ปุ่มขอสิทธิ์การแจ้งเตือน (ซ่อนไว้ก่อน) */
-    #notifyBtn {
-      position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
-      background: #00B4D8; color: white; border: none; padding: 12px 24px;
-      border-radius: 30px; font-family: sans-serif; font-weight: bold;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.3); cursor: pointer; display: none; z-index: 9999;
+   /* ปุ่มติดตั้ง PWA แบบกำหนดเอง */
+    #installBtn {
+      position: fixed; top: 20px; right: 20px; z-index: 10000;
+      background: #10B981; color: white; border: none; padding: 10px 20px;
+      border-radius: 8px; font-family: sans-serif; font-weight: bold; font-size: 14px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3); cursor: pointer; display: none;
     }
   </style>
 </head>
 <body>
-
+  <button id="installBtn">📲 ติดตั้งแยป (Install)</button>
   <button id="notifyBtn" onclick="requestNotificationPermission()">เปิดการแจ้งเตือน</button>
 
   <iframe id="appFrame" src="https://script.google.com/macros/s/AKfycbwvPMb9Bu4ZTCjb6sNTIYJ3w_X5beSuiAddk7ljE15-ZsZ01UfvVRaTKYmRGiCSIN11Jg/exec" allow="camera; microphone; fullscreen; display-capture" allowfullscreen></iframe>
@@ -67,6 +68,37 @@
     });
 
     // 5. สั่ง Service Worker ให้แสดงการแจ้งเตือน (เพื่อให้รองรับมือถือเต็มรูปแบบ)
+    // ระบบดักจับ PWA เพื่อโชว์ปุ่มติดตั้งแอป
+    let deferredPrompt;
+    window.addEventListener('beforeinstallprompt', (e) => {
+      // ดักไม่ให้ Chrome แสดง UI ของตัวเอง
+      e.preventDefault();
+      deferredPrompt = e;
+      
+      // แสดงปุ่ม "ติดตั้งแอป" ของเรา
+      const installBtn = document.getElementById('installBtn');
+      installBtn.style.display = 'block';
+
+      installBtn.addEventListener('click', () => {
+        // ซ่อนปุ่มเมื่อถูกกด
+        installBtn.style.display = 'none';
+        // เรียกหน้าต่างติดตั้งของเบราว์เซอร์ขึ้นมา
+        deferredPrompt.prompt();
+        // รอผลลัพธ์ว่าผู้ใช้กดยืนยันหรือยกเลิก
+        deferredPrompt.userChoice.then((choiceResult) => {
+          if (choiceResult.outcome === 'accepted') {
+            console.log('ผู้ใช้ยอมรับการติดตั้ง');
+          }
+          deferredPrompt = null;
+        });
+      });
+    });
+
+    // ซ่อนปุ่มถ้าแอปถูกติดตั้งไปแล้ว
+    window.addEventListener('appinstalled', () => {
+      document.getElementById('installBtn').style.display = 'none';
+      console.log('ติดตั้ง PWA เรียบร้อย');
+    });
     function showPushNotification(title, body) {
       if (Notification.permission === 'granted' && navigator.serviceWorker) {
         navigator.serviceWorker.ready.then(function(registration) {
