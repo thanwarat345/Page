@@ -1,6 +1,5 @@
 const CACHE_NAME = 'geely-pwa-cache-v1';
 const urlsToCache = [
-  './',
   './index.html',
   './manifest.json'
 ];
