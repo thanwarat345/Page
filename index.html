@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Geely Portal PWA</title>
   
-  <link rel="manifest" href="manifest.json">
+  <link rel="manifest" href="./manifest.json">
   <meta name="theme-color" content="#0B132B">
   <link rel="apple-touch-icon" href="icon-192.png">
 
@@ -31,7 +31,7 @@
     // 1. ลงทะเบียน Service Worker สำหรับ PWA
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('sw.js').then(reg => {
+        navigator.serviceWorker.register('./sw.js').then(reg => {
           console.log('Service Worker Registered!', reg);
         }).catch(err => console.error('Service Worker Error', err));
       });
